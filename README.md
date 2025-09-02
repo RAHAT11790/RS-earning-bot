@@ -1,0 +1,1 @@
+# RS-earning-bot
