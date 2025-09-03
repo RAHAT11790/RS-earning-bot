@@ -1,49 +1,50 @@
-# RS Earning Bot (Firebase + GitHub Pages)
+import logging
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+)
 
-🚀 A simple earning app built with **Firebase Auth + Firestore** and hosted free on **GitHub Pages**.
+# ---------------- Config ----------------
+BOT_TOKEN = "8496840003:AAG88MWo80q4hYGFKoO0Jnz59qIo1sx5ZIY"
 
----
+GROUP_URL = "https://t.me/hindianime03"
+CHANNEL_URL = "https://t.me/cartoonfunny03"
+EARNING_URL = "https://rsearnine02.blogspot.com/?m=1"   # WebApp লিংক
 
-## 🔥 Features
-- Google Login + Email/Password Login (Firebase Auth)
-- Firestore integration for user data (coins, profile, leaderboard)
-- Home page → Claim ads and earn coins
-- Wallet → Live balance + withdraw option
-- Leaderboard → Top users in real-time
-- Profile → Name, photo, email, coins live
-- Refer → UID / Referral link copy & share
+# ---------------- Logging ----------------
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger("RS EARNING BOT")
 
----
+# ---------------- Keyboards --------------
+def home_keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("Group", url=GROUP_URL),
+         InlineKeyboardButton("Channel", url=CHANNEL_URL)],
+        [InlineKeyboardButton("💰 Start Earning", web_app=WebAppInfo(url=EARNING_URL))],
+    ])
 
-## 📦 How to Deploy on GitHub Pages
+# ---------------- Handlers ----------------
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    text = (
+        f"হ্যালো {update.effective_user.first_name}! 👋\n\n"
+        "🚀 স্বাগতম **RS EARNING BOT**-এ!\n\n"
+        "শুধু অ্যাডস দেখেই আয় করুন।\n\n"
+        "💿 Conversion Rate → 1000 Coins = 5৳\n\n"
+        "বন্ধুদের আমন্ত্রণ করুন —আপনার রেফার কোড দিন ১০০ কয়েন জিতেনিন!"
+    )
+    await update.message.reply_text(text, reply_markup=home_keyboard(), parse_mode="Markdown")
 
-### 1. Create GitHub Repo
-1. Login to GitHub → Create a new repository (public)
-2. Name it: `RS-earning-bot`
-3. Do NOT add template files (keep empty)
+# ---------------- Main ----------------
+def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    logger.info("RS EARNING BOT is running…")
+    app.run_polling()
 
-### 2. Upload Files
-1. Upload your HTML (`index.html`) → This must be renamed from `RS_GitHubReady.HTML`
-2. (Optional) Upload README.md and other assets
-
-### 3. Enable GitHub Pages
-1. Go to Repository → Settings → Pages
-2. Source → Select `Branch: main` → `/ (root)`
-3. Save ✅
-
-### 4. Your Live App
-After a few minutes your app will be live at:
-```
-https://your-username.github.io/RS-earning-bot/
-```
-
----
-
-## ⚠️ Notes
-- Make sure to add your **Firebase config keys** inside `index.html`
-- Firestore security rules must allow read/write for testing
-- Later, lock rules properly for production
-
----
-
-👨‍💻 Made for mobile hosting without PC (GitHub Pages + Firebase)
+if __name__ == "__main__":
+    main()
