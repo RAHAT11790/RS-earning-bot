@@ -2,8 +2,7 @@ import logging
 import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-from flask import Flask
-from threading import Thread
+from keep_alive import keep_alive   # <-- এখানে যোগ করা হলো
 
 # ---------------- Config ----------------
 BOT_TOKEN = os.getenv("8496840003:AAG88MWo80q4hYGFKoO0Jnz59qIo1sx5ZIY")
@@ -34,31 +33,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🚀 স্বাগতম **RS EARNING BOT**-এ!\n\n"
         "শুধু অ্যাডস দেখেই আয় করুন।\n\n"
         "💿 Conversion Rate → 1000 Coins = 5৳\n\n"
-        "বন্ধুদের আমন্ত্রণ করুন — আপনার রেফার কোড দিন ১০০ কয়েন জিতেনিন!"
+        "বন্ধুদের আমন্ত্রণ করুন —আপনার রেফার কোড দিন ১০০ কয়েন জিতেনিন!"
     )
     await update.message.reply_text(text, reply_markup=home_keyboard(), parse_mode="Markdown")
 
-# ---------------- Keep Alive (Flask) ----------------
-app_flask = Flask('')
-
-@app_flask.route('/')
-def home():
-    return "RS EARNING BOT is alive!"
-
-def run():
-    app_flask.run(host='0.0.0.0', port=8080)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-
 # ---------------- Main ----------------
 def main():
+    keep_alive()   # <-- সার্ভার সবসময় চালু রাখবে
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     logger.info("RS EARNING BOT is running…")
     app.run_polling()
 
 if __name__ == "__main__":
-    keep_alive()  # Flask সার্ভার চালু (২৪/৭ active রাখবে)
     main()
