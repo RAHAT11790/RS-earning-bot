@@ -1,4 +1,5 @@
 import logging
+import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, WebAppInfo
 from telegram.ext import (
     ApplicationBuilder,
@@ -7,11 +8,11 @@ from telegram.ext import (
 )
 
 # ---------------- Config ----------------
-BOT_TOKEN = "8496840003:AAG88MWo80q4hYGFKoO0Jnz59qIo1sx5ZIY"
+BOT_TOKEN = os.getenv("8496840003:AAG88MWo80q4hYGFKoO0Jnz59qIo1sx5ZIY")  # Render এ Environment Variable থেকে নিবে
 
 GROUP_URL = "https://t.me/hindianime03"
 CHANNEL_URL = "https://t.me/cartoonfunny03"
-EARNING_URL = "https://rsearnine02.blogspot.com/?m=1"   # WebApp লিংক
+EARNING_URL = "https://rsearnine02.blogspot.com/?m=1"
 
 # ---------------- Logging ----------------
 logging.basicConfig(
@@ -35,7 +36,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🚀 স্বাগতম **RS EARNING BOT**-এ!\n\n"
         "শুধু অ্যাডস দেখেই আয় করুন।\n\n"
         "💿 Conversion Rate → 1000 Coins = 5৳\n\n"
-        "বন্ধুদের আমন্ত্রণ করুন —আপনার রেফার কোড দিন ১০০ কয়েন জিতেনিন!"
+        "বন্ধুদের আমন্ত্রণ করুন — আপনার রেফার কোড দিন ১০০ কয়েন জিতেনিন!"
     )
     await update.message.reply_text(text, reply_markup=home_keyboard(), parse_mode="Markdown")
 
