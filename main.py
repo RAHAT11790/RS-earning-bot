@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from keep_alive import keep_alive   # <-- এখানে যোগ করা হলো
 
 # ---------------- Config ----------------
-BOT_TOKEN = os.getenv("8396188764:AAGmNofcQabyNQkyCDOWRvUewxYN9E1RkZw")
+BOT_TOKEN = os.getenv("8285619410:AAH95_Gh7FfL7Cg9ankaKKqrPF7wbIhAx3g")
 
 GROUP_URL = "https://t.me/hindianime03"
 CHANNEL_URL = "https://t.me/cartoonfunny03"
