@@ -3,9 +3,11 @@ import re
 import asyncio
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from flask import Flask
+import threading
 
 # ============= Token setup =============
-TOKEN = "8260956615:AAHZndn1iMmzuMJ_YZqCNxiiuVb53aRMLDo"  # আপনার টোকেন
+TOKEN = "8260956615:AAHZndn1iMmzuMJ_YZqCNxiiuVb53aRMLDo"  # নতুন টোকেন
 
 # ============= Global username store ============
 RS_USERNAMES = [None, None, None]  # তিনটি ইউজারনেম স্টোর করা
@@ -16,6 +18,13 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# ============= Flask Setup =================
+app = Flask(__name__)
+
+@app.route('/health')
+def health():
+    return 'OK'  # UptimeRobot এটি দেখে বট রানিং বলে ধরবে
 
 # ============= Helper functions =================
 def _normalize_username(u: str) -> str:
@@ -48,18 +57,21 @@ def replace_all_usernames(text: str, new_usernames: list) -> str:
         return text  # If match found, no change
     
     # Replace usernames based on count
-    if len(usernames) >= 3 and new_usernames[2]:  # If 3+ usernames and all three are set
-        text = re.sub(r'@[a-zA-Z0-9_]{1,32}', lambda m: f'@{new_usernames[0] if m.group(0).startswith("@") else new_usernames[1] if m.group(0).startswith("@") else new_usernames[2]}', text, count=3, flags=re.IGNORECASE)
-        text = re.sub(r't\.me/[a-zA-Z0-9_]{1,32}', lambda m: f't.me/{new_usernames[0] if m.group(0).startswith("t.me/") else new_usernames[1] if m.group(0).startswith("t.me/") else new_usernames[2]}', text, count=3, flags=re.IGNORECASE)
-        text = re.sub(r'https?://(www\.)?t\.me/[a-zA-Z0-9_]{1,32}', lambda m: f'https://t.me/{new_usernames[0] if m.group(0).startswith("https://") else new_usernames[1] if m.group(0).startswith("https://") else new_usernames[2]}', text, count=3, flags=re.IGNORECASE)
-    elif len(usernames) >= 2 and new_usernames[1]:  # If 2+ usernames and second is set
-        text = re.sub(r'@[a-zA-Z0-9_]{1,32}', lambda m: f'@{new_usernames[0] if m.group(0).startswith("@") else new_usernames[1]}', text, count=2, flags=re.IGNORECASE)
-        text = re.sub(r't\.me/[a-zA-Z0-9_]{1,32}', lambda m: f't.me/{new_usernames[0] if m.group(0).startswith("t.me/") else new_usernames[1]}', text, count=2, flags=re.IGNORECASE)
-        text = re.sub(r'https?://(www\.)?t\.me/[a-zA-Z0-9_]{1,32}', lambda m: f'https://t.me/{new_usernames[0] if m.group(0).startswith("https://") else new_usernames[1]}', text, count=2, flags=re.IGNORECASE)
+    if len(usernames) >= 3 and new_usernames[0] and new_usernames[1] and new_usernames[2]:  # If 3+ usernames and all three are set
+        text = re.sub(r'(@[a-zA-Z0-9_]{1,32}|t\.me/[a-zA-Z0-9_]{1,32}|https?://(www\.)?t\.me/[a-zA-Z0-9_]{1,32})', 
+                      lambda m: f'@{new_usernames[0]}' if m.group(0).startswith('@') else 
+                                f't.me/{new_usernames[1]}' if m.group(0).startswith('t.me/') else 
+                                f'https://t.me/{new_usernames[2]}', 
+                      text, count=3, flags=re.IGNORECASE)
+    elif len(usernames) >= 2 and new_usernames[0] and new_usernames[1]:  # If 2+ usernames and first two are set
+        text = re.sub(r'(@[a-zA-Z0-9_]{1,32}|t\.me/[a-zA-Z0-9_]{1,32}|https?://(www\.)?t\.me/[a-zA-Z0-9_]{1,32})', 
+                      lambda m: f'@{new_usernames[0]}' if m.group(0).startswith('@') else 
+                                f't.me/{new_usernames[1]}', 
+                      text, count=2, flags=re.IGNORECASE)
     elif len(usernames) >= 1 and new_usernames[0]:  # If 1 username and first is set
-        text = re.sub(r'@[a-zA-Z0-9_]{1,32}', f'@{new_usernames[0]}', text, count=1, flags=re.IGNORECASE)
-        text = re.sub(r't\.me/[a-zA-Z0-9_]{1,32}', f't.me/{new_usernames[0]}', text, count=1, flags=re.IGNORECASE)
-        text = re.sub(r'https?://(www\.)?t\.me/[a-zA-Z0-9_]{1,32}', f'https://t.me/{new_usernames[0]}', text, count=1, flags=re.IGNORECASE)
+        text = re.sub(r'(@[a-zA-Z0-9_]{1,32}|t\.me/[a-zA-Z0-9_]{1,32}|https?://(www\.)?t\.me/[a-zA-Z0-9_]{1,32})', 
+                      lambda m: f'@{new_usernames[0]}', 
+                      text, count=1, flags=re.IGNORECASE)
     
     return text
 
@@ -67,13 +79,13 @@ def replace_all_usernames(text: str, new_usernames: list) -> str:
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     welcome_text = """🤖 Welcome to HINDI ANIME CHANNEL BOT
 
-✅ How to use:
-1. First set your usernames: /set_rs username1 username2 username3
-2. Then COPY-PASTE (not forward) any message here
-3. For batch update in channel: /batch_update @channelusername 50 (last 50 messages)
+    ✅ How to use:
+    1. First set your usernames: /set_rs username1 username2 username3
+    2. Then COPY-PASTE (not forward) any message here
+    3. For batch update in channel: /batch_update @channelusername 50 (last 50 messages)
 
-❌ DON'T FORWARD MESSAGES
-✅ COPY-PASTE INSTEAD"""
+    ❌ DON'T FORWARD MESSAGES
+    ✅ COPY-PASTE INSTEAD"""
     await update.message.reply_text(welcome_text)
 
 async def set_rs(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -183,25 +195,23 @@ async def process_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logger.error(f"Repost failed: {e}")
             await msg.reply_text(f"📝 Text version:\n\n{new_text}")
 
-# ============= Main =============================
-def main():
-    logger.info("🤖 Starting bot...")
-    logger.info(f"🤖 Using token: {TOKEN[:10]}...")
-    
-    app = Application.builder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("set_rs", set_rs))
-    app.add_handler(CommandHandler("batch_update", batch_update))
-    
-    app.add_handler(MessageHandler(
+# ============= Run Bot and Flask =================
+def run_bot():
+    application = Application.builder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("set_rs", set_rs))
+    application.add_handler(CommandHandler("batch_update", batch_update))
+    application.add_handler(MessageHandler(
         filters.TEXT | filters.PHOTO | filters.VIDEO | filters.AUDIO |
         filters.Document.ALL | filters.VOICE | filters.Sticker.ALL,
         process_message
     ))
-
     logger.info("🤖 Bot started (polling)...")
-    app.run_polling(timeout=60)
+    application.run_polling(timeout=60)
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    # Flask সার্ভার একটি থ্রেডে চালান
+    flask_thread = threading.Thread(target=lambda: app.run(host='0.0.0.0', port=10000, debug=False))
+    flask_thread.start()
+    # বট চালান
+    run_bot()
